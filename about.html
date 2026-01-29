@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Über [Dein Name]." />
+  <title>Über mich — [Dein Name]</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <script>
+    (() => {
+      const saved = localStorage.getItem("theme");
+      const systemPrefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = saved ?? (systemPrefersDark ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Startseite">
+        <span class="brand-mark">⬤</span><span class="brand-text">[Dein Name]</span>
+      </a>
+      <nav class="nav" aria-label="Hauptnavigation">
+        <a class="nav-link" href="index.html" data-nav="index">Home</a>
+        <a class="nav-link" href="about.html" data-nav="about">Über mich</a>
+        <a class="nav-link" href="projects.html" data-nav="projects">Projekte</a>
+        <a class="nav-link" href="contact.html" data-nav="contact">Kontakt</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Theme umschalten" data-theme-toggle>
+        <span class="theme-toggle-icon" aria-hidden="true">☾</span>
+        <span class="theme-toggle-text">Dark</span>
+      </button>
+      <button class="nav-toggle" type="button" aria-label="Menü öffnen" data-nav-toggle>
+        <span class="nav-toggle-bars" aria-hidden="true"></span>
+      </button>
+    </div>
+    <div class="mobile-nav" data-mobile-nav>
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="about.html">Über mich</a>
+      <a class="nav-link" href="projects.html">Projekte</a>
+      <a class="nav-link" href="contact.html">Kontakt</a>
+    </div>
+  </header>
+
+  <main id="main" class="page">
+    <section class="page-hero">
+      <div class="container">
+        <h1>Über mich</h1>
+        <p class="muted">Ein kurzer Überblick — wer du bist, was du machst, wofür du brennst.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container grid about-grid">
+        <div class="card">
+          <h2>Story</h2>
+          <p>
+            Schreib hier 6–10 Zeilen über dich: Interessen, wie du zu Technik/Design kamst,
+            was du aktuell lernst, woran du arbeitest.
+          </p>
+          <p class="muted">
+            Tipp: Eine Sache, die dich einzigartig macht + ein konkretes Beispiel.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Skills</h2>
+          <ul class="list">
+            <li><span class="dot"></span> Swift / iOS Grundlagen</li>
+            <li><span class="dot"></span> Web (HTML/CSS/JS)</li>
+            <li><span class="dot"></span> 3D / Fusion / Prototyping</li>
+            <li><span class="dot"></span> …</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section subtle">
+      <div class="container">
+        <div class="timeline card">
+          <h2>Mini-Timeline</h2>
+          <div class="timeline-items">
+            <div class="timeline-item">
+              <p class="timeline-title">2024</p>
+              <p class="muted">Erstes großes Projekt …</p>
+            </div>
+            <div class="timeline-item">
+              <p class="timeline-title">2025</p>
+              <p class="muted">Fokus: Swift & Maker-Projekte …</p>
+            </div>
+            <div class="timeline-item">
+              <p class="timeline-title">Jetzt</p>
+              <p class="muted">Aktuell: …</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="cta" style="margin-top: 18px;">
+          <div>
+            <h2>Kontakt?</h2>
+            <p class="muted">Wenn du Feedback hast oder eine Idee teilen willst.</p>
+          </div>
+          <a class="btn btn-primary" href="contact.html">Nachricht senden</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="muted">© <span data-year></span> [Dein Name]</p>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="contact.html">Kontakt</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js" defer></script>
+</body>
+</html>
