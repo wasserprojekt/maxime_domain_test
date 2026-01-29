@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Portfolio von [Dein Name] – Projekte, Infos und Kontakt." />
+  <title>Startseite</title>
+
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <script>
+    // verhindert "Flash" beim Theme-Wechsel
+    (() => {
+      const saved = localStorage.getItem("theme");
+      const systemPrefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+      const theme = saved ?? (systemPrefersDark ? "dark" : "light");
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Startseite">
+        <span class="brand-mark">⬤</span>
+        <span class="brand-text">Guten Tag!</span>
+      </a>
+
+      <nav class="nav" aria-label="Hauptnavigation">
+        <a class="nav-link" href="index.html" data-nav="index">Home</a>
+        <a class="nav-link" href="projects.html" data-nav="projects">Projekte</a>
+        <a class="nav-link" href="contact.html" data-nav="contact">Kontakt</a>
+      </nav>
+
+      <button class="theme-toggle" type="button" aria-label="Theme umschalten" data-theme-toggle>
+        <span class="theme-toggle-icon" aria-hidden="true">☾</span>
+        <span class="theme-toggle-text">Dark</span>
+      </button>
+
+      <button class="nav-toggle" type="button" aria-label="Menü öffnen" data-nav-toggle>
+        <span class="nav-toggle-bars" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div class="mobile-nav" data-mobile-nav>
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="projects.html">Projekte</a>
+      <a class="nav-link" href="contact.html">Kontakt</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <!--Portfolio • [Stadt/Region optional]-->
+          <p class="eyebrow">Website</p>
+          <h1 class="hero-title">
+            Ich bin <span class="accent">ein Mensch</span> — ich atme und esse.
+          </h1>
+          <p class="hero-subtitle">
+            Lorem ipsum, dolor sit amet consectetur adipisicing elit. 
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="projects.html">Projekte ansehen</a>
+            <a class="btn btn-ghost" href="contact.html">Kontakt</a>
+          </div>
+
+          <div class="hero-badges" role="list" aria-label="Skills">
+            <span class="badge" role="listitem">Label 1</span>
+            <span class="badge" role="listitem">Label 2</span>
+            <span class="badge" role="listitem">Label 3</span>
+          </div>
+        </div>
+
+        <div class="hero-card" aria-label="Profilkarte">
+          <div class="profile">
+            <div class="avatar" aria-hidden="true">[Bild]</div>
+            <div>
+              <p class="profile-name">[Dein Name]</p>
+              <p class="profile-meta">[Weiere Informationen]</p>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <p class="stat-value">10</p>
+              <p class="stat-label">Beispiel 1</p>
+            </div>
+            <div class="stat">
+              <p class="stat-value">3</p>
+              <p class="stat-label">Beispiel 2</p>
+            </div>
+            <div class="stat">
+              <p class="stat-value">5</p>
+              <p class="stat-label">Beispiel 3</p>
+            </div>
+          </div>
+
+          <div class="card-divider"></div>
+
+          <p class="muted">
+            Lorem ipsum, dolor sit amet consectetur adipisicing elit. 
+          </p>
+
+          <div class="card-actions">
+            <a class="btn btn-small btn-primary" href="contact.html">Nachricht senden</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <h2>Optionen</h2>
+          <p class="muted" style="padding-bottom: 14px;">Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi incidunt reiciendis.</p>
+        </div>
+
+        <div class="grid cards-3">
+          <article class="card">
+            <h3>Text 1</h3>
+            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nisi incidunt reiciendis.</p>
+          </article>
+          <article class="card">
+            <h3>Text 2</h3>
+            <p>Voluptatum unde eius laborum dicta hic enim reprehenderit assumenda recusandae soluta fugit similique beatae ad..</p>
+          </article>
+          <article class="card">
+            <h3>Text 3</h3>
+            <p>Consequatur sit debitis eum natus iure officiis velit quas corporis.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section subtle">
+      <div class="container">
+        <div class="cta">
+          <div>
+            <h2>Kontakt</h2>
+            <p class="muted"></p>
+          </div>
+          <a class="btn btn-primary" href="contact.html">Zum Kontaktformular</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="muted">© <span data-year></span> <!--[Dein Name]--></p>
+      <div class="footer-links">
+        <a href="contact.html">Kontakt</a>
+        <a href="projects.html">Projekte</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js" defer></script>
+</body>
+</html>
