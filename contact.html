@@ -1,145 +1,482 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Kontakt zu [Dein Name]." />
-  <title>Guten Tag!</title>
-  <link rel="stylesheet" href="assets/css/style.css" />
-  <script>
-    (() => {
-      const saved = localStorage.getItem("theme");
-      const systemPrefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-      document.documentElement.dataset.theme = saved ?? (systemPrefersDark ? "dark" : "light");
-    })();
-  </script>
-</head>
-<body>
-  <a class="skip-link" href="#main">Zum Inhalt springen</a>
 
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="index.html"><span class="brand-mark">⬤</span><span class="brand-text">Guten Tag!</span></a>
-      <nav class="nav" aria-label="Hauptnavigation">
-        <a class="nav-link" href="index.html" data-nav="index">Home</a>
-        <a class="nav-link" href="projects.html" data-nav="projects">Projekte</a>
-        <a class="nav-link" href="contact.html" data-nav="contact">Kontakt</a>
-      </nav>
-      <button class="theme-toggle" type="button" aria-label="Theme umschalten" data-theme-toggle>
-        <span class="theme-toggle-icon" aria-hidden="true">☾</span>
-        <span class="theme-toggle-text">Dark</span>
-      </button>
-      <button class="nav-toggle" type="button" aria-label="Menü öffnen" data-nav-toggle>
-        <span class="nav-toggle-bars" aria-hidden="true"></span>
-      </button>
-    </div>
-    <div class="mobile-nav" data-mobile-nav>
-      <a class="nav-link" href="index.html">Home</a>
-      <a class="nav-link" href="projects.html">Projekte</a>
-      <a class="nav-link" href="contact.html">Kontakt</a>
-    </div>
-  </header>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  #app {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    background: #12100a;
+    color: #c8a87a;
+    min-height: 640px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  #grain {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+    opacity: 0.3; pointer-events: none; z-index: 10; border-radius: 8px;
+  }
+  #scan {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px);
+    pointer-events: none; z-index: 11; border-radius: 8px;
+  }
+  .header {
+    text-align: center;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid #3a2810;
+    position: relative; z-index: 5;
+    background: linear-gradient(to bottom, #0d0b07, #12100a);
+  }
+  .header h1 {
+    font-family: 'Special Elite', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #d4a854;
+    line-height: 1.6;
+  }
+  .header p { font-size: 10px; color: #6a4a22; letter-spacing: 3px; margin-top: 3px; }
 
-  <main id="main" class="page">
-    <section class="page-hero">
-      <div class="container">
-        <h1>Kontakt</h1>
-        <p class="muted">
-          Lorem ipsum dolor, sit amet consectetur adipisicing elit. Ex aut provident nisi maxime eum id, placeat ab aliquid ipsum dolores quibusdam?
-        </p>
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    min-height: 520px;
+    position: relative; z-index: 5;
+  }
+
+  /* ── DRUM PANEL ── */
+  .drum-panel {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    border-right: 1px solid #2a1c0a;
+  }
+
+  /* The glass bowl / drum */
+  .bowl-wrap {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    flex-shrink: 0;
+  }
+
+  .bowl-svg {
+    width: 100%; height: 100%;
+  }
+
+  /* Capsules inside the bowl */
+  .capsule-canvas {
+    position: absolute;
+    top: 28px; left: 28px;
+    width: 164px; height: 164px;
+    border-radius: 50%;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .cap-pill {
+    position: absolute;
+    width: 22px; height: 9px;
+    border-radius: 5px;
+    transform-origin: center;
+    transition: all 0.3s;
+  }
+
+  /* Big lottery number */
+  .lot-num {
+    font-family: 'Special Elite', monospace;
+    font-size: 56px;
+    color: #d4a854;
+    text-shadow: 0 0 30px rgba(212,168,84,0.3);
+    line-height: 1;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lot-num.flash { animation: numFlash 0.09s infinite; }
+  @keyframes numFlash {
+    0%,100%{opacity:1} 50%{opacity:0.2}
+  }
+
+  .drawn-date {
+    font-family: 'Special Elite', monospace;
+    font-size: 20px;
+    color: #c8a87a;
+    letter-spacing: 3px;
+    min-height: 28px;
+    text-align: center;
+  }
+
+  .sub-label {
+    font-size: 9px; letter-spacing: 2px; color: #4a3015; text-transform: uppercase;
+  }
+
+  /* Controls */
+  .controls { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .btn {
+    font-family: 'Courier Prime', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    border: 1px solid; padding: 9px 12px; cursor: pointer;
+    background: transparent; border-radius: 2px; transition: all 0.12s;
+    width: 100%;
+  }
+  .btn-main { border-color: #b8803a; color: #b8803a; }
+  .btn-main:hover:not(:disabled) { background: #b8803a; color: #0d0b07; }
+  .btn-main:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-sec { border-color: #3a2810; color: #5a3e1c; font-size: 10px; padding: 7px 10px; }
+  .btn-sec:hover:not(:disabled) { border-color: #7a5a30; color: #9a7a50; }
+  .btn-sec:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .progress-row {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+  }
+  .pbar { flex: 1; height: 3px; background: #1a1208; border-radius: 2px; overflow: hidden; }
+  .pfill { height: 100%; background: #b8803a; border-radius: 2px; transition: width 0.4s; }
+  .pnum { font-size: 10px; color: #5a3e1c; min-width: 32px; text-align: right; }
+
+  /* ── RESULTS PANEL ── */
+  .results-panel {
+    background: #0d0b07;
+    padding: 16px 12px;
+    overflow-y: auto;
+    max-height: 520px;
+  }
+  .res-title {
+    font-size: 9px; letter-spacing: 3px; color: #4a3015; text-transform: uppercase;
+    margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #1e1408;
+  }
+  .res-entry {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 0; border-bottom: 1px solid #141008;
+    animation: slideIn 0.25s ease;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+  .re-ord { font-size: 10px; color: #3a2810; min-width: 28px; }
+  .re-lot {
+    font-family: 'Special Elite', monospace; font-size: 15px; color: #d4a854;
+    min-width: 34px; text-align: center;
+  }
+  .re-date { font-size: 10px; color: #7a5a30; }
+
+  /* Ticker */
+  .ticker {
+    padding: 7px 0; background: #080604;
+    border-top: 1px solid #1e1408; overflow: hidden;
+    position: relative; z-index: 5;
+  }
+  .ticker-track {
+    display: flex; gap: 48px; white-space: nowrap;
+    font-size: 9px; color: #3a2810; letter-spacing: 2px;
+    animation: tick 25s linear infinite;
+  }
+  @keyframes tick { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  /* Status */
+  .statusbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 18px; background: #080604;
+    border-top: 1px solid #1e1408; position: relative; z-index: 5;
+  }
+  .sdot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #2a1c08; display: inline-block; margin-right: 5px;
+    transition: background 0.3s;
+  }
+  .sdot.on { background: #b8803a; animation: blink 0.9s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .stext { font-size: 9px; color: #4a3015; letter-spacing: 1px; }
+
+  .flash-overlay {
+    position: absolute; inset: 0;
+    background: rgba(212,168,84,0.04);
+    pointer-events: none; z-index: 20; opacity: 0; border-radius: 8px;
+  }
+  .flash-overlay.pop { animation: pop 0.5s ease; }
+  @keyframes pop { 0%{opacity:0} 15%{opacity:1} 100%{opacity:0} }
+</style>
+
+<div id="app">
+  <div id="grain"></div>
+  <div id="scan"></div>
+  <div class="flash-overlay" id="fov"></div>
+
+  <div class="header">
+    <h1>Selective Service System<br>National Draft Lottery — 1970</h1>
+    <p>Washington D.C. — July 1, 1970 &nbsp;·&nbsp; Jahrgang 1951</p>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT: Drum + controls -->
+    <div class="drum-panel">
+      <div class="sub-label">Lostrommel</div>
+
+      <div class="bowl-wrap">
+        <!-- Glass bowl SVG -->
+        <svg class="bowl-svg" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+          <!-- Bowl body -->
+          <ellipse cx="110" cy="115" rx="90" ry="88" fill="#0f0d08" stroke="#5a3e1c" stroke-width="2.5"/>
+          <!-- Bowl rim -->
+          <ellipse cx="110" cy="30" rx="90" ry="20" fill="none" stroke="#7a5a2a" stroke-width="2"/>
+          <ellipse cx="110" cy="30" rx="90" ry="20" fill="#1a1408" opacity="0.6"/>
+          <!-- Shine -->
+          <ellipse cx="78" cy="65" rx="18" ry="28" fill="white" opacity="0.025"/>
+          <!-- Stand -->
+          <rect x="85" y="198" width="50" height="10" rx="3" fill="#2a1c0a" stroke="#4a3018" stroke-width="1"/>
+          <rect x="100" y="193" width="20" height="7" rx="2" fill="#2a1c0a" stroke="#4a3018" stroke-width="1"/>
+          <!-- Hand crank -->
+          <circle cx="198" cy="100" r="6" fill="none" stroke="#6a4a20" stroke-width="2"/>
+          <line x1="198" y1="94" x2="198" y2="60" stroke="#5a3a18" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="198" cy="58" r="4" fill="#3a2810" stroke="#6a4a20" stroke-width="1.5"/>
+          <!-- Arrow on crank -->
+          <text x="205" y="80" font-size="8" fill="#3a2810" font-family="monospace">↺</text>
+        </svg>
+        <!-- Capsules rendered here -->
+        <div class="capsule-canvas" id="capsuleCanvas"></div>
       </div>
-    </section>
 
-    <!-- 
-    <section class="section">
-      <div class="container">
-        <div class="grid contact-grid">
-          <div class="card">
-            <h2>Kurze Hinweise</h2>
-            <ul class="list">
-              <li><span class="dot"></span> Keine Datenpflicht: Name/E-Mail optional</li>
-              <li><span class="dot"></span> Nachricht wird per Mail an mich weitergeleitet</li>
-              <li><span class="dot"></span> Bitte keine sensiblen Infos senden</li>
-            </ul>
-          </div>
+      <div class="lot-num" id="lotNum">—</div>
+      <div class="drawn-date" id="drawnDate">— — —</div>
+      <div class="sub-label" id="drawnLabel">&nbsp;</div>
 
-          <div class="card">
-            <h2>Beispiele</h2>
-            <p class="muted">„Hey, ich habe dein Projekt gesehen…“</p>
-            <p class="muted">„Kannst du mir kurz Feedback geben zu…?“</p>
-          </div>
+      <div class="controls">
+        <div class="progress-row">
+          <div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div>
+          <div class="pnum" id="pnum">0/366</div>
         </div>
-      </div>
-    </section>
-    -->
-    
-
-    <!-- Kontaktformular am Ende -->
-    <section class="section subtle">
-      <div class="container">
-        <div class="form-wrap card">
-          <div class="form-head">
-            <h2>Nachricht senden</h2>
-            <p class="muted">E-Mail erforderlich.</p>
-          </div>
-
-          <form class="contact-form"
-                id="contactForm"
-                action="https://formspree.io/f/xqebblbd"
-                method="POST"
-                novalidate>
-
-            <div class="form-row">
-              <div class="field">
-                <label for="name">Name (optional)</label>
-                <input id="name" name="name" type="text" autocomplete="name" placeholder="..." />
-              </div>
-
-              <div class="field">
-                <label for="email">E-Mail</label>
-                <input id="email" name="email" type="email" autocomplete="email" placeholder="..." required/>
-              </div>
-            </div>
-
-            <div class="field">
-              <label for="subject">Betreff</label>
-              <input id="subject" name="subject" type="text" required minlength="3" placeholder="..." />
-              <p class="field-hint">Mindestens 3 Zeichen.</p>
-            </div>
-
-            <div class="field">
-              <label for="message">Nachricht</label>
-              <textarea id="message" name="message" rows="7" required minlength="10" maxlength="1500"
-                        placeholder="Schreib deine Nachricht hier."></textarea>
-              <div class="field-meta">
-                <span class="field-hint">Mindestens 10 Zeichen.</span>
-                <span class="char-count" data-char-count>0 / 1500</span>
-              </div>
-            </div>
-
-            <!-- Honeypot (Anti-Spam): unsichtbar für echte Nutzer -->
-            <input type="text" name="_gotcha" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
-
-            <div class="form-actions">
-              <button class="btn btn-primary" type="submit">Absenden</button>
-              <p class="muted tiny" id="formStatus" role="status" aria-live="polite"></p>
-            </div>
-          </form>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <p class="muted">© <span data-year></span><!--Dein Name--></p>
-      <div class="footer-links">
-        <a href="index.html">Home</a>
-        <a href="projects.html">Projekte</a>
+        <button class="btn btn-main" id="drawBtn" onclick="drawOne()">▶ Kapsel ziehen</button>
+        <button class="btn btn-sec" id="autoBtn" onclick="toggleAuto()">⟳ Auto-Ziehung</button>
+        <button class="btn btn-sec" onclick="resetAll()">↺ Neustart</button>
       </div>
     </div>
-  </footer>
 
-  <script src="assets/js/main.js" defer></script>
-</body>
-</html>
+    <!-- RIGHT: Results -->
+    <div class="results-panel" id="resList">
+      <div class="res-title">Ziehungsprotokoll</div>
+      <div id="entries"></div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div><span class="sdot" id="sdot"></span><span class="stext" id="stext">Bereit</span></div>
+    <div class="stext" id="remaining">366 Kapseln verbleiben</div>
+  </div>
+
+  <div class="ticker">
+    <div class="ticker-track">
+      <span>SELECTIVE SERVICE ACT 1967 — LOTTERY ORDER 1970 — GEBURTSJAHR 1951 — 366 BLAUE KAPSELN — CONGRESSIONAL RECORD — DEPT. OF DEFENSE —</span>
+      <span>SELECTIVE SERVICE ACT 1967 — LOTTERY ORDER 1970 — GEBURTSJAHR 1951 — 366 BLAUE KAPSELN — CONGRESSIONAL RECORD — DEPT. OF DEFENSE —</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── AUTHENTIC 1970 DRAFT LOTTERY DATA ──
+// lottery[month][day] = draft number  (month 0-indexed, day 1-indexed)
+const lottery1970 = [
+  // JAN
+  [null,305,159,251,215,101,224,306,199,194,325,329,221,318,238,17,121,235,140,58,280,186,337,118,59,52,92,355,77,349,164,211],
+  // FEB
+  [null,86,144,297,210,214,347,91,181,338,216,150,68,152,4,89,212,189,292,25,302,363,290,57,236,179,365,205,299,362,null,null],
+  // MAR
+  [null,108,29,267,275,293,139,122,213,317,323,136,300,259,354,169,166,33,332,200,239,334,265,256,258,343,170,268,223,362,217,30],
+  // APR
+  [null,32,271,83,81,269,253,147,312,219,218,14,346,124,231,273,148,260,90,336,345,62,316,252,2,351,340,74,262,191,208,null],
+  // MAY
+  [null,330,298,40,276,364,155,35,321,197,65,37,133,295,178,130,55,112,278,75,183,250,326,319,31,361,357,296,308,226,103,313],
+  // JUN
+  [null,249,228,301,20,28,110,85,366,335,206,134,272,69,356,180,274,73,341,104,360,60,247,109,358,137,22,64,222,353,209,null],
+  // JUL
+  [null,93,350,115,279,188,327,50,13,277,284,248,15,42,331,322,120,98,190,227,187,27,153,172,23,67,303,289,88,270,287,193],
+  // AUG
+  [null,111,45,261,145,54,114,168,48,106,21,324,15,307,198,102,44,154,141,311,344,291,339,116,36,286,245,352,167,61,333,11],
+  // SEP
+  [null,225,161,49,232,82,6,8,184,263,71,158,242,175,1,113,207,255,246,177,63,204,160,119,195,149,18,233,257,151,315,null],
+  // OKT
+  [null,359,125,244,202,24,87,234,283,342,220,237,72,138,294,171,254,288,5,241,192,243,117,201,196,176,7,264,94,229,38,79],
+  // NOV
+  [null,19,34,348,266,310,76,51,97,80,282,46,66,126,127,131,107,143,146,203,185,156,9,182,230,132,309,47,281,99,174,null],
+  // DEZ
+  [null,129,328,157,165,56,10,12,105,43,41,39,314,163,26,320,96,304,128,240,135,70,53,162,95,84,173,78,123,16,3,100]
+];
+
+const MONTHS = ['JAN','FEB','MÄR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DEZ'];
+const MDAYS  = [31,29,31,30,31,30,31,31,30,31,30,31];
+
+// Build the 366 capsules in lottery order (1..366)
+function buildSequence() {
+  // invert: for each lottery number 1..366, find its date
+  const seq = new Array(367);
+  for (let m = 0; m < 12; m++) {
+    for (let d = 1; d <= MDAYS[m]; d++) {
+      const n = lottery1970[m][d];
+      if (n) seq[n] = { m, d, label: `${String(d).padStart(2,'0')} ${MONTHS[m]}` };
+    }
+  }
+  // ordered array 1..366
+  const result = [];
+  for (let i = 1; i <= 366; i++) if (seq[i]) result.push({ lot: i, ...seq[i] });
+  return result;
+}
+
+const SEQUENCE = buildSequence(); // [{ lot, m, d, label }, ...]
+
+// Capsule colors (blue like the real ones)
+const CAP_COLORS = ['#2a4a7a','#1e3a6a','#2e527e','#16305a','#243f6e'];
+
+let remaining = [];
+let drawn = [];
+let autoInt = null;
+let busy = false;
+
+// ── CAPSULE VISUALIZATION ──
+function renderCapsules(count) {
+  const canvas = document.getElementById('capsuleCanvas');
+  canvas.innerHTML = '';
+  const R = 82; // radius of bowl interior
+  const cx = 82, cy = 82;
+  // Place up to 80 visible pills randomly seeded
+  const visible = Math.min(count, 80);
+  for (let i = 0; i < visible; i++) {
+    const seed = i * 137.508;
+    const angle = seed % 360;
+    const r = (Math.sin(seed * 0.3) * 0.5 + 0.5) * (R - 12);
+    const x = cx + r * Math.cos(angle * Math.PI / 180) - 11;
+    const y = cy + r * Math.sin(angle * Math.PI / 180) - 4.5;
+    const rot = (seed * 73.1) % 180 - 90;
+    const col = CAP_COLORS[i % CAP_COLORS.length];
+
+    const pill = document.createElement('div');
+    pill.className = 'cap-pill';
+    pill.style.cssText = `left:${x}px;top:${y}px;background:${col};transform:rotate(${rot}deg);opacity:${0.7 + (i%3)*0.1};box-shadow:0 1px 3px rgba(0,0,0,0.6)`;
+    canvas.appendChild(pill);
+  }
+}
+
+function shakeCapsules() {
+  const canvas = document.getElementById('capsuleCanvas');
+  const pills = canvas.querySelectorAll('.cap-pill');
+  pills.forEach((p, i) => {
+    const dx = (Math.random()-0.5)*8;
+    const dy = (Math.random()-0.5)*8;
+    const dr = (Math.random()-0.5)*30;
+    const cur = p.style.cssText;
+    p.style.transform = `rotate(${dr}deg) translate(${dx}px,${dy}px)`;
+    setTimeout(() => { p.style.transform = p.style.transform; }, 200);
+  });
+}
+
+function resetAll() {
+  if (autoInt) { clearInterval(autoInt); autoInt = null; }
+  remaining = [...SEQUENCE];
+  drawn = [];
+  busy = false;
+  document.getElementById('lotNum').textContent = '—';
+  document.getElementById('lotNum').classList.remove('flash');
+  document.getElementById('drawnDate').textContent = '— — —';
+  document.getElementById('drawnLabel').innerHTML = '&nbsp;';
+  document.getElementById('entries').innerHTML = '';
+  document.getElementById('pfill').style.width = '0%';
+  document.getElementById('pnum').textContent = '0/366';
+  document.getElementById('drawBtn').disabled = false;
+  document.getElementById('autoBtn').disabled = false;
+  document.getElementById('autoBtn').textContent = '⟳ Auto-Ziehung';
+  document.getElementById('sdot').classList.remove('on');
+  document.getElementById('stext').textContent = 'Bereit';
+  document.getElementById('remaining').textContent = '366 Kapseln verbleiben';
+  renderCapsules(366);
+}
+
+function drawOne() {
+  if (remaining.length === 0 || busy) return;
+  busy = true;
+  document.getElementById('drawBtn').disabled = true;
+  document.getElementById('sdot').classList.add('on');
+  document.getElementById('stext').textContent = 'Ziehung läuft...';
+
+  // The next item in sequence
+  const item = remaining.shift();
+
+  // Shake capsules
+  shakeCapsules();
+
+  // Flash number
+  const lotEl = document.getElementById('lotNum');
+  lotEl.classList.add('flash');
+  let flashes = 0;
+  const fi = setInterval(() => {
+    lotEl.textContent = Math.floor(Math.random()*366)+1;
+    flashes++;
+    if (flashes > 22) {
+      clearInterval(fi);
+      lotEl.textContent = item.lot;
+      lotEl.classList.remove('flash');
+
+      document.getElementById('drawnDate').textContent = item.label;
+      document.getElementById('drawnLabel').textContent = `Losnummer ${item.lot}`;
+
+      // Flash overlay
+      const fov = document.getElementById('fov');
+      fov.classList.remove('pop');
+      void fov.offsetWidth;
+      fov.classList.add('pop');
+
+      drawn.push(item);
+      renderCapsules(remaining.length);
+      addEntry(item, drawn.length);
+
+      const pct = Math.round((drawn.length/366)*100);
+      document.getElementById('pfill').style.width = pct+'%';
+      document.getElementById('pnum').textContent = `${drawn.length}/366`;
+      document.getElementById('remaining').textContent = `${remaining.length} verbleiben`;
+
+      setTimeout(() => {
+        busy = false;
+        if (remaining.length > 0) {
+          document.getElementById('drawBtn').disabled = false;
+          document.getElementById('sdot').classList.remove('on');
+          document.getElementById('stext').textContent = `Los ${item.lot} → ${item.label}`;
+        } else {
+          document.getElementById('drawBtn').disabled = true;
+          document.getElementById('autoBtn').disabled = true;
+          document.getElementById('sdot').classList.remove('on');
+          document.getElementById('stext').textContent = 'Alle 366 Kapseln gezogen';
+          if (autoInt) { clearInterval(autoInt); autoInt = null; }
+          document.getElementById('autoBtn').textContent = '⟳ Auto-Ziehung';
+        }
+      }, 600);
+    }
+  }, 75);
+}
+
+function addEntry(item, seq) {
+  const wrap = document.getElementById('entries');
+  const el = document.createElement('div');
+  el.className = 'res-entry';
+  el.innerHTML = `<span class="re-ord">#${String(seq).padStart(3,'0')}</span><span class="re-lot">${item.lot}</span><span class="re-date">${item.label}</span>`;
+  wrap.prepend(el);
+}
+
+function toggleAuto() {
+  if (autoInt) {
+    clearInterval(autoInt);
+    autoInt = null;
+    document.getElementById('autoBtn').textContent = '⟳ Auto-Ziehung';
+    return;
+  }
+  document.getElementById('autoBtn').textContent = '◼ Stop';
+  autoInt = setInterval(() => {
+    if (remaining.length === 0 || busy) {
+      clearInterval(autoInt); autoInt = null;
+      document.getElementById('autoBtn').textContent = '⟳ Auto-Ziehung';
+      return;
+    }
+    drawOne();
+  }, 1600);
+}
+
+resetAll();
+</script>
