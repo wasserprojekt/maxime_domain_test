@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LINIE — Ein-Strich-Puzzle</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap');
+
+  :root{
+    --bg-0:#06080d;
+    --bg-1:#0c1019;
+    --tile:#3e4a5e;
+    --tile-hi:#4a5870;
+    --tile-lo:#333d4e;
+    --fill:#36c5ef;
+    --fill-hi:#5fd6f8;
+    --fill-lo:#1899c4;
+    --line:#1287b0;
+    --ink:#eef3f8;
+    --ink-dim:#8b97a8;
+    --gold:#ffd166;
+    --r:22%;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+
+  body{
+    background:
+      radial-gradient(120% 90% at 50% -10%, #131a2a 0%, var(--bg-1) 45%, var(--bg-0) 100%);
+    font-family:'Baloo 2', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+    color:var(--ink);
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:none;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- Kopfzeile ---------- */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 20px 0;
+    z-index:5;
+  }
+  .hbtn{
+    width:52px;height:52px;border:none;cursor:pointer;
+    border-radius:16px;
+    background:linear-gradient(180deg,#1b2230,#11161f);
+    box-shadow:0 4px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+    color:var(--ink-dim);
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    transition:transform .12s, color .2s;
+  }
+  .hbtn:active{transform:scale(.9)}
+  .hbtn svg{width:24px;height:24px;fill:currentColor}
+
+  #levelBadge{
+    padding:10px 26px;border-radius:16px;
+    background:linear-gradient(180deg,#1b2230,#11161f);
+    box-shadow:0 4px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+    font-weight:800;font-size:clamp(18px,4.5vw,24px);letter-spacing:.12em;
+    white-space:nowrap;
+  }
+  #levelBadge .num{color:var(--fill)}
+
+  .hgroup{display:flex;gap:12px}
+
+  /* ---------- Spielfeld ---------- */
+  #stage{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  #board{
+    position:relative;
+    transition:opacity .25s, transform .25s;
+  }
+  #board.leaving{opacity:0;transform:scale(.92)}
+  #board.entering{opacity:0;transform:scale(1.06)}
+
+  .tile{
+    position:absolute;
+    border-radius:var(--r);
+    background:linear-gradient(165deg,var(--tile-hi) 0%,var(--tile) 45%,var(--tile-lo) 100%);
+    box-shadow:0 7px 14px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,255,255,.10);
+    transition:background .15s;
+  }
+  .tile::after{ /* Glanzkante */
+    content:'';position:absolute;inset:0;border-radius:inherit;
+    background:linear-gradient(180deg,rgba(255,255,255,.08),transparent 40%);
+    pointer-events:none;
+  }
+  .tile.on{
+    background:linear-gradient(165deg,var(--fill-hi) 0%,var(--fill) 50%,var(--fill-lo) 100%);
+    box-shadow:0 7px 18px rgba(20,150,200,.45), 0 0 26px rgba(54,197,239,.30),
+               inset 0 1px 1px rgba(255,255,255,.35);
+    animation:pop .18s ease-out;
+  }
+  @keyframes pop{
+    0%{transform:scale(.92)} 60%{transform:scale(1.05)} 100%{transform:scale(1)}
+  }
+
+  .tile .dot{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:26%;height:26%;border-radius:50%;
+    background:#fff;
+    box-shadow:0 0 0 4px rgba(255,255,255,.28), 0 2px 6px rgba(0,0,0,.35);
+    opacity:0;transition:opacity .2s;
+  }
+  .tile.start .dot{opacity:1}
+  .tile.start:not(.on){animation:breathe 1.8s ease-in-out infinite}
+  @keyframes breathe{
+    0%,100%{box-shadow:0 7px 14px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,255,255,.10)}
+    50%{box-shadow:0 7px 14px rgba(0,0,0,.5), 0 0 22px rgba(54,197,239,.35), inset 0 1px 1px rgba(255,255,255,.10)}
+  }
+
+  #wire{position:absolute;inset:0;pointer-events:none;overflow:visible}
+  #wire path{
+    fill:none;stroke:var(--line);
+    stroke-linecap:round;stroke-linejoin:round;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));
+  }
+
+  /* Sieg-Welle */
+  #board.won .tile.on{
+    animation:wave .6s ease both;
+    animation-delay:calc(var(--i) * 28ms);
+  }
+  @keyframes wave{
+    0%{transform:scale(1)}
+    35%{transform:scale(1.12);box-shadow:0 0 34px rgba(95,214,248,.8)}
+    100%{transform:scale(1)}
+  }
+
+  /* ---------- Toast ---------- */
+  #toast{
+    position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);
+    font-size:clamp(34px,8vw,58px);font-weight:800;letter-spacing:.04em;
+    color:var(--gold);
+    text-shadow:0 0 30px rgba(255,209,102,.55), 0 4px 10px rgba(0,0,0,.6);
+    opacity:0;pointer-events:none;z-index:10;
+    transition:opacity .25s, transform .3s cubic-bezier(.2,1.6,.4,1);
+  }
+  #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+  /* ---------- Partikel ---------- */
+  .spark{
+    position:fixed;width:10px;height:10px;border-radius:3px;
+    pointer-events:none;z-index:9;
+    animation:fly .9s ease-out forwards;
+  }
+  @keyframes fly{
+    0%{transform:translate(0,0) rotate(0);opacity:1}
+    100%{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}
+  }
+
+  /* ---------- Fortschritt ---------- */
+  #progressWrap{
+    display:flex;justify-content:center;padding:0 0 26px;
+  }
+  #progress{
+    width:min(340px,70vw);height:10px;border-radius:99px;
+    background:#141a26;
+    box-shadow:inset 0 2px 4px rgba(0,0,0,.6);
+    overflow:hidden;
+  }
+  #progress > div{
+    height:100%;width:0%;
+    background:linear-gradient(90deg,var(--fill-lo),var(--fill-hi));
+    border-radius:99px;
+    transition:width .15s ease-out;
+    box-shadow:0 0 10px rgba(54,197,239,.6);
+  }
+
+  /* ---------- Einstellungen ---------- */
+  #overlay{
+    position:fixed;inset:0;background:rgba(2,4,8,.66);
+    backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;
+  }
+  #overlay.open{opacity:1;pointer-events:auto}
+  #panel{
+    width:min(420px,90vw);
+    background:linear-gradient(180deg,#161d2b,#0e1320);
+    border-radius:26px;padding:30px 28px 26px;
+    box-shadow:0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07);
+    transform:translateY(16px) scale(.97);transition:transform .22s;
+  }
+  #overlay.open #panel{transform:none}
+  #panel h2{font-size:24px;font-weight:800;margin-bottom:4px}
+  #panel p.sub{color:var(--ink-dim);font-size:15px;margin-bottom:20px}
+
+  .diffGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px}
+  .diff{
+    border:none;cursor:pointer;border-radius:18px;padding:16px 10px 13px;
+    background:linear-gradient(180deg,#1d2535,#131927);
+    box-shadow:0 4px 10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.05);
+    color:var(--ink);font-family:inherit;text-align:center;
+    transition:transform .12s, box-shadow .2s;
+    position:relative;
+  }
+  .diff:active{transform:scale(.95)}
+  .diff .name{font-weight:800;font-size:17px}
+  .diff .meta{color:var(--ink-dim);font-size:12.5px;margin-top:2px}
+  .diff.sel{
+    box-shadow:0 4px 14px rgba(54,197,239,.35), inset 0 0 0 2.5px var(--fill);
+  }
+  .diff.sel .name{color:var(--fill)}
+
+  .rowOpt{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 2px;
+  }
+  .rowOpt span{font-weight:600;font-size:16px}
+  .switch{
+    width:56px;height:32px;border-radius:99px;border:none;cursor:pointer;
+    background:#1a2233;position:relative;transition:background .2s;
+    box-shadow:inset 0 2px 4px rgba(0,0,0,.5);
+  }
+  .switch::after{
+    content:'';position:absolute;top:4px;left:4px;width:24px;height:24px;
+    border-radius:50%;background:#5a6678;transition:left .2s, background .2s;
+    box-shadow:0 2px 4px rgba(0,0,0,.4);
+  }
+  .switch.on{background:rgba(54,197,239,.25)}
+  .switch.on::after{left:28px;background:var(--fill)}
+
+  #closePanel{
+    width:100%;margin-top:20px;padding:14px;border:none;cursor:pointer;
+    border-radius:16px;font-family:inherit;font-weight:800;font-size:17px;
+    color:#04222e;
+    background:linear-gradient(180deg,var(--fill-hi),var(--fill-lo));
+    box-shadow:0 6px 16px rgba(24,153,196,.4);
+    transition:transform .12s;
+  }
+  #closePanel:active{transform:scale(.97)}
+
+  #hint{
+    position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+    color:var(--ink-dim);font-size:14px;letter-spacing:.03em;white-space:nowrap;
+    opacity:.85;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hgroup">
+    <button class="hbtn" id="btnSettings" title="Einstellungen">
+      <svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 .06-1 7.5 7.5 0 0 0-.06-1l2.06-1.6a.5.5 0 0 0 .12-.64l-1.95-3.38a.5.5 0 0 0-.6-.22l-2.43.98a7.4 7.4 0 0 0-1.73-1l-.37-2.58A.5.5 0 0 0 14 2h-3.9a.5.5 0 0 0-.5.42l-.36 2.58c-.63.26-1.2.6-1.74 1l-2.43-.98a.5.5 0 0 0-.6.22L2.5 8.62a.5.5 0 0 0 .12.64L4.68 11a7.5 7.5 0 0 0 0 2l-2.06 1.61a.5.5 0 0 0-.12.64l1.95 3.38a.5.5 0 0 0 .6.22l2.43-.98c.53.41 1.11.75 1.74 1l.36 2.58a.5.5 0 0 0 .5.42H14a.5.5 0 0 0 .5-.42l.37-2.58a7.4 7.4 0 0 0 1.73-1l2.43.98a.5.5 0 0 0 .6-.22l1.95-3.38a.5.5 0 0 0-.12-.64L19.4 13Zm-7.35 2.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2Z"/></svg>
+    </button>
+    <button class="hbtn" id="btnReset" title="Level zurücksetzen">
+      <svg viewBox="0 0 24 24"><path d="M12 5V1.8L6.8 6 12 10.2V7a5.5 5.5 0 1 1-5.5 5.5H4.3A7.7 7.7 0 1 0 12 5Z"/></svg>
+    </button>
+  </div>
+
+  <div id="levelBadge">LEVEL <span class="num" id="levelNum">1</span></div>
+
+  <div class="hgroup">
+    <button class="hbtn" id="btnSkip" title="Level überspringen">
+      <svg viewBox="0 0 24 24"><path d="M5 5.6v12.8c0 .8.9 1.3 1.6.9l9.6-6.4a1 1 0 0 0 0-1.8L6.6 4.7c-.7-.4-1.6.1-1.6.9ZM18 5h2v14h-2z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="stage">
+  <div id="board"></div>
+  <div id="toast">Geschafft!</div>
+</div>
+
+<div id="progressWrap"><div id="progress"><div id="progFill"></div></div></div>
+<div id="hint">Ziehe vom Punkt aus eine Linie durch jedes Feld</div>
+
+<!-- Einstellungen -->
+<div id="overlay">
+  <div id="panel">
+    <h2>Einstellungen</h2>
+    <p class="sub">Neue Level werden automatisch generiert</p>
+
+    <div class="diffGrid" id="diffGrid">
+      <button class="diff" data-d="0"><div class="name">Leicht</div><div class="meta">8–12 Felder</div></button>
+      <button class="diff" data-d="1"><div class="name">Mittel</div><div class="meta">14–20 Felder</div></button>
+      <button class="diff" data-d="2"><div class="name">Schwer</div><div class="meta">22–30 Felder</div></button>
+      <button class="diff" data-d="3"><div class="name">Experte</div><div class="meta">32–44 Felder</div></button>
+    </div>
+
+    <div class="rowOpt">
+      <span>Töne</span>
+      <button class="switch on" id="soundSwitch"></button>
+    </div>
+
+    <button id="closePanel">Weiter spielen</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   LEVEL-GENERATOR (v3 — der härteste Kompromiss)
+
+   Grundidee unverändert: erst wird ein zufälliger selbst-
+   vermeidender Pfad gezogen, dessen Zellen DAS Spielfeld
+   ergeben -> jedes Level ist garantiert lösbar.
+
+   Problem v2: reine 1-breite Schlangen haben zwar nur eine
+   Lösung, aber JEDER Zug ist erzwungen -> man folgt nur.
+   Große Blöcke wiederum haben hunderte Lösungen -> Probieren
+   klappt fast immer. Das Schwierigkeits-Maximum liegt
+   dazwischen: 2-breite Passagen, Schleifen, Abzweigungen.
+
+   So wird es jetzt gefunden:
+   1) Pro Level entstehen viele Kandidaten mit UNTERSCHIED-
+      LICHER Wuchs-Tendenz — von blockig bis schlangig.
+      Dadurch ist das ganze Spektrum im Topf.
+   2) Jeder Kandidat wird von einem simulierten Probier-
+      Spieler angegriffen: viele zufällige Versuche vom
+      Startpunkt aus. Erfolgsquote ~100% = Schlange (alles
+      erzwungen), hohe Quote = Block (alles erlaubt).
+      Gesucht ist die NIEDRIGSTE Quote: viele echte
+      Entscheidungen, von denen fast alle in die Sackgasse
+      führen.
+   3) Dazu kommen wenige erlaubte Lösungswege (gedeckelte
+      Zählung) und eine Strafe für 3x3-Klötze, damit keine
+      Riesenflächen entstehen.
+   ============================================================ */
+
+const DIFFS = [
+  {w:5,  h:5, min:8,  max:12, cand:14},
+  {w:7,  h:6, min:14, max:20, cand:16},
+  {w:8,  h:8, min:22, max:30, cand:18},
+  {w:10, h:9, min:32, max:44, cand:18},
+];
+
+const rnd  = n => Math.floor(Math.random()*n);
+const shuf = a => { for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+function generateLevel(diff){
+  const {w,h,min,max,cand} = DIFFS[diff];
+  const target = Math.min(min + rnd(max-min+1), w*h);
+
+  // Kandidaten über das ganze Spektrum erzeugen:
+  // bias < 0 -> wächst blockig, bias > 0 -> wächst schlangig
+  const biases = [-0.5, -0.15, 0.2, 0.55, 0.9];
+  const candidates = [];
+  for(let c=0; c<cand; c++){
+    const bias = biases[c % biases.length] + (Math.random()*0.3 - 0.15);
+    const p = growPath(w,h,target,bias);
+    if(p) candidates.push(finalize(p));
+  }
+  if(!candidates.length){
+    // Fallback (praktisch nie nötig): Schlangenpfad
+    const path=[]; for(let y=0;y<h;y++){ const row=[]; for(let x=0;x<w;x++) row.push([x,y]); if(y%2) row.reverse(); path.push(...row);}
+    return finalize(path.slice(0,target));
+  }
+
+  // 1. Runde: simulierter Probier-Spieler (billig) auf allen
+  candidates.forEach(lv => {
+    lv._p = playoutSuccess(lv, 200);     // Erfolgsquote 0..1, niedrig = schwer
+    lv._slab = slabPenalty(lv);          // 3x3-Klötze, 0..1
+  });
+  candidates.sort((a,b)=>(a._p+a._slab)-(b._p+b._slab));
+
+  // 2. Runde: für die härtesten zusätzlich Lösungen zählen
+  const finalists = candidates.slice(0, Math.min(6, candidates.length));
+  finalists.forEach(lv => {
+    lv._sols  = countSolutions(lv, 64, 35000);
+    lv._score = 3.0*lv._p                          // Probieren darf nicht klappen
+              + 1.6*Math.min(lv._sols,64)/64       // wenige gültige Wege
+              + 1.2*lv._slab;                      // keine Riesenflächen
+  });
+  finalists.sort((a,b)=>a._score-b._score);
+  return finalists[0];
+}
+
+/* Pfadwachstum mit einstellbarer Tendenz:
+   bias > 0 meidet besuchte Nachbarn (dünn/schlangig),
+   bias < 0 sucht sie (kompakt/blockig). */
+function growPath(w,h,target,bias){
+  for(let attempt=0; attempt<60; attempt++){
+    const sx = rnd(w), sy = rnd(h);
+    const visited = new Set([sy*w+sx]);
+    const path = [[sx,sy]];
+    const budget = {n: 50000};
+    if(dfs(path, visited, w, h, target, budget, bias)) return path;
+  }
+  return null;
+}
+
+function visitedNeighbours(x,y,visited,w,h){
+  let n=0;
+  if(visited.has(y*w+x+1)) n++;
+  if(visited.has(y*w+x-1)) n++;
+  if(visited.has((y+1)*w+x)) n++;
+  if(visited.has((y-1)*w+x)) n++;
+  return n;
+}
+
+function dfs(path, visited, w, h, target, budget, bias){
+  if(path.length === target) return true;
+  if(--budget.n <= 0) return false;
+  const [x,y] = path[path.length-1];
+
+  const opts = [];
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const nx=x+dx, ny=y+dy, k=ny*w+nx;
+    if(nx<0||ny<0||nx>=w||ny>=h||visited.has(k)) continue;
+    const crowd = visitedNeighbours(nx,ny,visited,w,h) - 1; // aktuelle Zelle abziehen
+    opts.push({nx,ny,k, s: crowd*bias + Math.random()});
+  }
+  opts.sort((a,b)=>a.s-b.s);
+
+  for(const o of opts){
+    visited.add(o.k); path.push([o.nx,o.ny]);
+    if(dfs(path, visited, w, h, target, budget, bias)) return true;
+    visited.delete(o.k); path.pop();
+  }
+  return false;
+}
+
+/* Simulierter Probier-Spieler: zieht vom Startpunkt aus zufällig
+   weiter, bis nichts mehr geht. Anteil erfolgreicher Versuche =
+   wie leicht das Brett durch Herumprobieren fällt. */
+function playoutSuccess(lv, tries){
+  const has = k => lv.cells.has(k);
+  const startKey = `${lv.start[0]},${lv.start[1]}`;
+  let ok = 0;
+  for(let t=0; t<tries; t++){
+    const used = new Set([startKey]);
+    let x = lv.start[0], y = lv.start[1], len = 1;
+    while(true){
+      const opts = [];
+      if(has(`${x+1},${y}`)&&!used.has(`${x+1},${y}`)) opts.push([x+1,y]);
+      if(has(`${x-1},${y}`)&&!used.has(`${x-1},${y}`)) opts.push([x-1,y]);
+      if(has(`${x},${y+1}`)&&!used.has(`${x},${y+1}`)) opts.push([x,y+1]);
+      if(has(`${x},${y-1}`)&&!used.has(`${x},${y-1}`)) opts.push([x,y-1]);
+      if(!opts.length) break;
+      [x,y] = opts[rnd(opts.length)];
+      used.add(`${x},${y}`); len++;
+    }
+    if(len === lv.total) ok++;
+  }
+  return ok/tries;
+}
+
+/* Strafe für massive Flächen: Anteil voll gefüllter 3x3-Klötze */
+function slabPenalty(lv){
+  const has = (x,y)=>lv.cells.has(`${x},${y}`);
+  let slabs=0;
+  for(const key of lv.cells){
+    const [x,y]=key.split(',').map(Number);
+    let full=true;
+    for(let dy=0;dy<3&&full;dy++) for(let dx=0;dx<3&&full;dx++)
+      if(!has(x+dx,y+dy)) full=false;
+    if(full) slabs++;
+  }
+  return Math.min(1, slabs / Math.max(1, lv.total*0.18));
+}
+
+/* Lösungen vom Startpunkt aus zählen — gedeckelt, damit es
+   immer schnell bleibt. Sackgassen-Pruning hält die Suche klein. */
+function countSolutions(lv, capCount, capNodes){
+  const has = k => lv.cells.has(k);
+  const used = new Set([`${lv.start[0]},${lv.start[1]}`]);
+  const state = {count:0, nodes:0};
+
+  function deadEndPrune(cx,cy){
+    // Eine unbesuchte Zelle mit 0 freien Nachbarn (und nicht neben
+    // der aktuellen Position) kann nie mehr erreicht werden.
+    for(const key of lv.cells){
+      if(used.has(key)) continue;
+      const [x,y]=key.split(',').map(Number);
+      if(Math.abs(x-cx)+Math.abs(y-cy)===1) continue;
+      let free=0;
+      if(has(`${x+1},${y}`)&&!used.has(`${x+1},${y}`)) free++;
+      if(has(`${x-1},${y}`)&&!used.has(`${x-1},${y}`)) free++;
+      if(has(`${x},${y+1}`)&&!used.has(`${x},${y+1}`)) free++;
+      if(has(`${x},${y-1}`)&&!used.has(`${x},${y-1}`)) free++;
+      if(free===0) return true;
+    }
+    return false;
+  }
+
+  function go(x,y,len){
+    if(state.count>capCount || ++state.nodes>capNodes) return;
+    if(len===lv.total){ state.count++; return; }
+    if(deadEndPrune(x,y)) return;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx, ny=y+dy, k=`${nx},${ny}`;
+      if(!has(k)||used.has(k)) continue;
+      used.add(k); go(nx,ny,len+1); used.delete(k);
+    }
+  }
+  go(lv.start[0], lv.start[1], 1);
+  // Budget überschritten -> als "viele" werten
+  return state.nodes>capNodes ? capCount+1 : state.count;
+}
+
+function finalize(path){
+  // Auf Bounding-Box zuschneiden, damit das Feld zentriert sitzt
+  let minX=99,minY=99,maxX=0,maxY=0;
+  for(const [x,y] of path){ minX=Math.min(minX,x); minY=Math.min(minY,y); maxX=Math.max(maxX,x); maxY=Math.max(maxY,y); }
+  const cells = path.map(([x,y])=>[x-minX, y-minY]);
+  return {
+    w: maxX-minX+1,
+    h: maxY-minY+1,
+    cells: new Set(cells.map(([x,y])=>`${x},${y}`)),
+    start: cells[0],          // Lösungs-Startpunkt -> garantiert lösbar
+    total: cells.length
+  };
+}
+
+/* ============================================================
+   SPIEL-ZUSTAND & RENDERING
+   ============================================================ */
+
+const board    = document.getElementById('board');
+const wireNS   = 'http://www.w3.org/2000/svg';
+const toast    = document.getElementById('toast');
+const progFill = document.getElementById('progFill');
+const levelNum = document.getElementById('levelNum');
+
+let level = null;          // aktuelles Level-Objekt
+let levelCount = 1;
+let difficulty = 1;        // Mittel
+let cellPx = 80, gapPx = 12;
+let tiles = new Map();     // "x,y" -> DOM-Element
+let path = [];             // gezogener Pfad [[x,y],...]
+let pathSet = new Set();
+let dragging = false;
+let locked = false;        // während Sieg-Animation
+let soundOn = true;
+
+/* Das nächste Level wird im Hintergrund vorberechnet,
+   damit der Wechsel trotz aufwendiger Auswahl sofort passiert */
+let pregen = null, pregenDiff = -1;
+function schedulePregen(){
+  setTimeout(()=>{
+    if(!pregen || pregenDiff!==difficulty){
+      pregenDiff = difficulty;
+      pregen = generateLevel(difficulty);
+    }
+  }, 80);
+}
+
+function newLevel(animate=true){
+  level = (pregen && pregenDiff===difficulty) ? pregen : generateLevel(difficulty);
+  pregen = null;
+  path = []; pathSet = new Set(); locked = false;
+  buildBoard();
+  if(animate){
+    board.classList.add('entering');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>board.classList.remove('entering')));
+  }
+  updateProgress();
+  schedulePregen();
+}
+
+function buildBoard(){
+  // Größe berechnen
+  const stage = document.getElementById('stage');
+  const availW = stage.clientWidth  - 48;
+  const availH = stage.clientHeight - 48;
+  const unit = Math.min(availW/level.w, availH/level.h, 104);
+  gapPx  = Math.max(6, unit*0.13);
+  cellPx = unit - gapPx;
+
+  const W = level.w*unit - gapPx, H = level.h*unit - gapPx;
+  board.style.width  = W+'px';
+  board.style.height = H+'px';
+  board.classList.remove('won');
+  board.innerHTML = '';
+  tiles.clear();
+
+  // SVG-Linie zuerst (liegt unter den Punkt-Markern, über Kachel-Hintergrund? -> über Kacheln, das passt optisch)
+  const svg = document.createElementNS(wireNS,'svg');
+  svg.id='wire';
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
+  const p = document.createElementNS(wireNS,'path');
+  p.setAttribute('stroke-width', Math.max(8, cellPx*0.16));
+  svg.appendChild(p);
+
+  for(const key of level.cells){
+    const [x,y] = key.split(',').map(Number);
+    const t = document.createElement('div');
+    t.className='tile';
+    t.style.width = t.style.height = cellPx+'px';
+    t.style.left = x*(cellPx+gapPx)+'px';
+    t.style.top  = y*(cellPx+gapPx)+'px';
+    t.dataset.key = key;
+    const dot = document.createElement('div');
+    dot.className='dot';
+    t.appendChild(dot);
+    if(x===level.start[0] && y===level.start[1]) t.classList.add('start');
+    board.appendChild(t);
+    tiles.set(key,t);
+  }
+  board.appendChild(svg);
+}
+
+function center(x,y){
+  return [ x*(cellPx+gapPx)+cellPx/2, y*(cellPx+gapPx)+cellPx/2 ];
+}
+
+function redraw(){
+  // Kacheln einfärben
+  for(const [key,t] of tiles){
+    const on = pathSet.has(key);
+    t.classList.toggle('on', on);
+    if(on) t.style.setProperty('--i', path.findIndex(c=>`${c[0]},${c[1]}`===key));
+  }
+  // Linie
+  const p = board.querySelector('#wire path');
+  if(path.length<2){ p.setAttribute('d',''); }
+  else{
+    let d='';
+    path.forEach(([x,y],i)=>{
+      const [cx,cy]=center(x,y);
+      d += (i? ' L':'M')+cx.toFixed(1)+' '+cy.toFixed(1);
+    });
+    p.setAttribute('d',d);
+  }
+  updateProgress();
+}
+
+function updateProgress(){
+  progFill.style.width = level ? (100*path.length/level.total)+'%' : '0%';
+}
+
+/* ============================================================
+   EINGABE (Maus + Touch via Pointer Events)
+   ============================================================ */
+
+function cellFromEvent(e){
+  const r = board.getBoundingClientRect();
+  const px = e.clientX - r.left, py = e.clientY - r.top;
+  const x = Math.floor(px/(cellPx+gapPx));
+  const y = Math.floor(py/(cellPx+gapPx));
+  const key = `${x},${y}`;
+  if(!level.cells.has(key)) return null;
+  // etwas Toleranz: nur reagieren, wenn man wirklich auf der Kachel ist (nicht im Spalt)
+  const lx = px - x*(cellPx+gapPx), ly = py - y*(cellPx+gapPx);
+  const pad = -gapPx*0.4;
+  if(lx<pad||ly<pad||lx>cellPx-pad||ly>cellPx-pad) return null;
+  return [x,y];
+}
+
+function tryStep(cell){
+  if(!cell) return;
+  const key = `${cell[0]},${cell[1]}`;
+
+  if(path.length===0){
+    if(key === `${level.start[0]},${level.start[1]}`){
+      path.push(cell); pathSet.add(key); blip(0); redraw();
+    }
+    return;
+  }
+
+  const last = path[path.length-1];
+
+  // Rückwärts ziehen = letzten Schritt löschen
+  if(path.length>=2){
+    const prev = path[path.length-2];
+    if(cell[0]===prev[0] && cell[1]===prev[1]){
+      const k = `${last[0]},${last[1]}`;
+      pathSet.delete(k); path.pop(); blip(-1); redraw();
+      return;
+    }
+  }
+
+  // Schnelle Bewegungen entlang einer Zeile/Spalte interpolieren
+  const dx = Math.sign(cell[0]-last[0]), dy = Math.sign(cell[1]-last[1]);
+  if((dx!==0 && dy!==0) || (dx===0&&dy===0)) return;       // nur orthogonal
+  let [cx,cy] = last;
+  while(cx!==cell[0] || cy!==cell[1]){
+    cx+=dx; cy+=dy;
+    const k=`${cx},${cy}`;
+    if(!level.cells.has(k) || pathSet.has(k)) return;       // blockiert -> abbrechen
+    path.push([cx,cy]); pathSet.add(k); blip(path.length);
+  }
+  redraw();
+  if(path.length===level.total) win();
+}
+
+board.parentElement.addEventListener('pointerdown', e=>{
+  if(locked) return;
+  const cell = cellFromEvent(e);
+  if(!cell) return;
+  const key = `${cell[0]},${cell[1]}`;
+
+  if(pathSet.has(key)){
+    // Pfad bis zu diesem Punkt kürzen und weiterziehen
+    const idx = path.findIndex(c=>`${c[0]},${c[1]}`===key);
+    for(let i=path.length-1;i>idx;i--) pathSet.delete(`${path[i][0]},${path[i][1]}`);
+    path.length = idx+1;
+    redraw();
+  } else {
+    tryStep(cell);
+  }
+  dragging = true;
+});
+window.addEventListener('pointermove', e=>{
+  if(!dragging || locked) return;
+  tryStep(cellFromEvent(e));
+});
+window.addEventListener('pointerup', ()=> dragging=false);
+window.addEventListener('pointercancel', ()=> dragging=false);
+
+/* ============================================================
+   SIEG
+   ============================================================ */
+
+function win(){
+  locked = true; dragging = false;
+  board.classList.add('won');
+  chord();
+  setTimeout(()=>{ toast.classList.add('show'); confetti(); }, 250);
+  setTimeout(()=>{
+    toast.classList.remove('show');
+    board.classList.add('leaving');
+  }, 1250);
+  setTimeout(()=>{
+    levelCount++;
+    levelNum.textContent = levelCount;
+    board.classList.remove('leaving');
+    newLevel();
+  }, 1550);
+}
+
+function confetti(){
+  const r = board.getBoundingClientRect();
+  const cx = r.left+r.width/2, cy = r.top+r.height/2;
+  const colors = ['#36c5ef','#5fd6f8','#ffd166','#ff8fa3','#9b8cff'];
+  for(let i=0;i<26;i++){
+    const s = document.createElement('div');
+    s.className='spark';
+    const a = Math.random()*Math.PI*2, d = 90+Math.random()*150;
+    s.style.left=cx+'px'; s.style.top=cy+'px';
+    s.style.background=colors[rnd(colors.length)];
+    s.style.setProperty('--dx', Math.cos(a)*d+'px');
+    s.style.setProperty('--dy', Math.sin(a)*d - 40+'px');
+    s.style.setProperty('--rot', (Math.random()*540-270)+'deg');
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(), 950);
+  }
+}
+
+/* ============================================================
+   TÖNE (WebAudio, dezent)
+   ============================================================ */
+
+let actx = null;
+function tone(freq, dur=0.09, vol=0.16, type='sine'){
+  if(!soundOn) return;
+  actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(vol, actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(); o.stop(actx.currentTime+dur);
+}
+function blip(i){ tone(i<0 ? 240 : 320 + Math.min(i,28)*14); }
+function chord(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.32,0.14,'triangle'), i*70)); }
+
+/* ============================================================
+   UI: Buttons & Einstellungen
+   ============================================================ */
+
+document.getElementById('btnReset').onclick = ()=>{
+  if(locked) return;
+  path=[]; pathSet=new Set(); redraw();
+};
+document.getElementById('btnSkip').onclick = ()=>{
+  if(locked) return;
+  levelCount++; levelNum.textContent=levelCount;
+  board.classList.add('leaving');
+  setTimeout(()=>{ board.classList.remove('leaving'); newLevel(); }, 250);
+};
+
+const overlay = document.getElementById('overlay');
+document.getElementById('btnSettings').onclick = ()=> overlay.classList.add('open');
+document.getElementById('closePanel').onclick  = ()=> overlay.classList.remove('open');
+overlay.addEventListener('pointerdown', e=>{ if(e.target===overlay) overlay.classList.remove('open'); });
+
+document.querySelectorAll('.diff').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('.diff').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+    const d = +b.dataset.d;
+    if(d!==difficulty){
+      difficulty = d;
+      newLevel();           // sofort neues Level in neuer Schwierigkeit
+    }
+  };
+});
+document.querySelector(`.diff[data-d="${difficulty}"]`).classList.add('sel');
+
+const soundSwitch = document.getElementById('soundSwitch');
+soundSwitch.onclick = ()=>{
+  soundOn = !soundOn;
+  soundSwitch.classList.toggle('on', soundOn);
+  if(soundOn) tone(523,0.1);
+};
+
+window.addEventListener('resize', ()=>{
+  if(!level) return;
+  const savedPath = path.map(c=>[...c]);
+  buildBoard();
+  path = savedPath; pathSet = new Set(path.map(c=>`${c[0]},${c[1]}`));
+  redraw();
+});
+
+/* Start */
+newLevel(false);
+</script>
+</body>
+</html>
